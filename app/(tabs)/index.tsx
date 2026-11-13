@@ -1,6 +1,6 @@
-import { PlaceholderScreen } from "@/shared/components/PlaceholderScreen";
+import { StudyHomeScreen } from "@/features/study";
 
-// Route file: only places a screen. The real screen comes from a feature folder.
+// Route file: only places the study home screen.
 export default function IndexTab() {
-  return <PlaceholderScreen message="Study sessions arrive in Phase 1." />;
+  return <StudyHomeScreen />;
 }

@@ -22,6 +22,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="word/[id]" options={{ title: "Word" }} />
         <Stack.Screen name="credits" options={{ title: "Credits" }} />
+        <Stack.Screen name="session" options={{ headerShown: false }} />
       </Stack>
     </DatabaseProvider>
   );
