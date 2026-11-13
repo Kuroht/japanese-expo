@@ -23,6 +23,7 @@ export default function RootLayout() {
         <Stack.Screen name="word/[id]" options={{ title: "Word" }} />
         <Stack.Screen name="kanji/[char]" options={{ title: "Kanji" }} />
         <Stack.Screen name="vocab" options={{ title: "Words I already know" }} />
+        <Stack.Screen name="stats" options={{ title: "Stats" }} />
         <Stack.Screen name="credits" options={{ title: "Credits" }} />
         <Stack.Screen name="session" options={{ headerShown: false }} />
       </Stack>

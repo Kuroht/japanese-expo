@@ -11,6 +11,7 @@ import { StudySettingsSection } from "./StudySettingsSection";
 export function SettingsScreen() {
   return (
     <ScrollView contentContainerStyle={styles.screen}>
+      <LinkRow label="Stats" href="/stats" />
       <StudySettingsSection />
       <ReadingSettingsSection />
       <BackupSection />
@@ -21,7 +22,7 @@ export function SettingsScreen() {
 }
 
 // A tappable row that opens another screen.
-function LinkRow({ label, href }: { label: string; href: "/vocab" | "/credits" }) {
+function LinkRow({ label, href }: { label: string; href: "/vocab" | "/credits" | "/stats" }) {
   const colors = useTheme();
 
   return (
