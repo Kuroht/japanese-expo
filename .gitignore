@@ -43,3 +43,6 @@ yarn-error.*
 # data pipeline: downloaded sources and the built content DB (rebuild with npm run build:content)
 scripts/.cache/
 assets/content-v*.db
+
+# personal Claude Code permissions (not shared)
+.claude/settings.local.json

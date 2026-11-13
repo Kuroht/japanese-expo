@@ -39,3 +39,7 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Running commands
+
+If the session runs in auto mode or the user has allowed commands, run the commands the task needs (installs, builds, tests, linters, scripts) without stopping to ask the user for permission in chat. The permission system decides what is allowed. If a command is denied, continue with the rest of the work and report the denied command at the end.
