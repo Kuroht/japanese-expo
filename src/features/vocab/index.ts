@@ -1,5 +1,4 @@
-// Public API of the vocab feature (logic and data, no UI yet).
-// Bulk mark/unmark known lives in the study feature (markWordsKnown / unmarkWordsKnown).
+// Public API of the vocab feature: data, bulk mark/unmark known, and word display pieces.
 export type {
   VocabListOptions,
   VocabListRow,
@@ -12,3 +11,10 @@ export type {
 export { wordItemProvider } from "./api/wordItemProvider";
 export { getWordStudyDetails } from "./api/getWordStudyDetails";
 export { listVocabWords } from "./api/listVocabWords";
+export { markWordsKnown, unmarkWordsKnown } from "./api/knownWords";
+
+export { WordInfo } from "./components/WordInfo";
+export { WordHeadword } from "./components/WordHeadword";
+export { WordMeanings } from "./components/WordMeanings";
+export { WordExamples } from "./components/WordExamples";
+export { KnownWordsScreen } from "./components/KnownWordsScreen";

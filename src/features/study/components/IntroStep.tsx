@@ -7,12 +7,14 @@ import { CardLayout } from "./CardLayout";
 import { KanaIntro } from "./KanaIntro";
 import { LoanwordIntro } from "./LoanwordIntro";
 import { StudyButton } from "./StudyButton";
+import { WordIntro } from "./WordIntro";
 
 // Picks the intro content for the item type (small if-helper, no nested ternaries).
 function IntroContent({ item }: { item: ItemRef }) {
   const colors = useTheme();
   if (item.itemType === "kana") return <KanaIntro kana={item.itemKey} />;
   if (item.itemType === "loanword") return <LoanwordIntro itemKey={item.itemKey} />;
+  if (item.itemType === "word") return <WordIntro itemKey={item.itemKey} />;
   return <Text style={{ color: colors.mutedText }}>{item.itemKey}</Text>;
 }
 

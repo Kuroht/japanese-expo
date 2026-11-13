@@ -4,6 +4,9 @@ import { KanaRecognitionCard } from "./KanaRecognitionCard";
 import { KanaReverseCard } from "./KanaReverseCard";
 import { LoanwordReadingCard } from "./LoanwordReadingCard";
 import { SessionMessage } from "./SessionMessage";
+import { WordListeningCard } from "./WordListeningCard";
+import { WordReadingCard } from "./WordReadingCard";
+import { WordSpeakingCard } from "./WordSpeakingCard";
 
 type SessionStepViewProps = {
   step: SessionStep;
@@ -46,6 +49,17 @@ export function SessionStepView({
     return (
       <LoanwordReadingCard key={key} card={card} showHardEasy={showHardEasy} onGrade={onGrade} />
     );
+  }
+  if (card.item_type === "word" && card.card_type === "reading") {
+    return <WordReadingCard key={key} card={card} showHardEasy={showHardEasy} onGrade={onGrade} />;
+  }
+  if (card.item_type === "word" && card.card_type === "listening") {
+    return (
+      <WordListeningCard key={key} card={card} showHardEasy={showHardEasy} onGrade={onGrade} />
+    );
+  }
+  if (card.item_type === "word" && card.card_type === "speaking") {
+    return <WordSpeakingCard key={key} card={card} showHardEasy={showHardEasy} onGrade={onGrade} />;
   }
   return <SessionMessage isError message="This kind of card is not supported yet." />;
 }

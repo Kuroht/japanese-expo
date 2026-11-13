@@ -7,24 +7,32 @@ import { StudySettingsSection } from "./StudySettingsSection";
 
 // The Settings tab: study settings and a link to the Credits screen.
 export function SettingsScreen() {
-  const colors = useTheme();
-
   return (
     <ScrollView contentContainerStyle={styles.screen}>
       <StudySettingsSection />
-      <Pressable
-        onPress={() => router.push("/credits")}
-        accessibilityRole="button"
-        style={({ pressed }) => [
-          styles.row,
-          { backgroundColor: colors.card, borderColor: colors.border },
-          pressed && styles.pressed,
-        ]}
-      >
-        <Text style={[styles.rowText, { color: colors.text }]}>Credits</Text>
-        <Text style={{ color: colors.mutedText }}>›</Text>
-      </Pressable>
+      <LinkRow label="Words I already know" href="/vocab" />
+      <LinkRow label="Credits" href="/credits" />
     </ScrollView>
+  );
+}
+
+// A tappable row that opens another screen.
+function LinkRow({ label, href }: { label: string; href: "/vocab" | "/credits" }) {
+  const colors = useTheme();
+
+  return (
+    <Pressable
+      onPress={() => router.push(href)}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.row,
+        { backgroundColor: colors.card, borderColor: colors.border },
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text style={[styles.rowText, { color: colors.text }]}>{label}</Text>
+      <Text style={{ color: colors.mutedText }}>›</Text>
+    </Pressable>
   );
 }
 

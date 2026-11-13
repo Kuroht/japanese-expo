@@ -27,7 +27,6 @@ export { countIntroducedToday, loadDueCards } from "./api/cardQueries";
 export { introduceItem } from "./api/introduceItem";
 export { markItemsKnown } from "./api/markItemsKnown";
 export { unmarkItemsKnown } from "./api/unmarkItemsKnown";
-export { markWordsKnown, unmarkWordsKnown } from "./api/knownWords";
 export { getNewItemCandidates } from "./api/newItemCandidates";
 export { prepareSession } from "./api/prepareSession";
 export type { PreparedSession } from "./api/prepareSession";

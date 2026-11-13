@@ -27,6 +27,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export function WordDetailContent({ word }: { word: WordDetail }) {
   const colors = useTheme();
   const { speak, hasJapaneseVoice } = useSpeech();
+  const headword = word.furigana.map((segment) => segment.text).join("");
+  const showReading = headword !== word.kanaText;
   const otherForms = word.forms.map((form) => form.text).join("、 ");
 
   return (
@@ -35,7 +37,9 @@ export function WordDetailContent({ word }: { word: WordDetail }) {
         <JapaneseText segments={word.furigana} fontSize={36} />
         <AudioButton label="Play reading" onPress={() => speak(word.kanaText)} size={28} />
       </View>
-      <Text style={[styles.reading, { color: colors.mutedText }]}>{word.kanaText}</Text>
+      {showReading ? (
+        <Text style={[styles.reading, { color: colors.mutedText }]}>{word.kanaText}</Text>
+      ) : null}
       <WordTags jlpt={word.jlpt} isCommon={word.isCommon} />
       {hasJapaneseVoice === false ? <NoJapaneseVoiceBanner /> : null}
 
