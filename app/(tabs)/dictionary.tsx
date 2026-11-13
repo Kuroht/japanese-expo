@@ -1,6 +1,6 @@
-import { PlaceholderScreen } from "@/shared/components/PlaceholderScreen";
+import { DictionarySearchScreen } from "@/features/dictionary";
 
-// Route file: only places a screen. The real screen comes from a feature folder.
+// Route file: only places a screen from the dictionary feature.
 export default function DictionaryTab() {
-  return <PlaceholderScreen message="Dictionary search arrives later in Phase 0." />;
+  return <DictionarySearchScreen />;
 }
