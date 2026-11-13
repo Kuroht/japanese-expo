@@ -42,7 +42,8 @@ CREATE TABLE words (
   jlpt INTEGER, freq_rank INTEGER, is_common INTEGER,
   kanji_text TEXT, kana_text TEXT, romaji TEXT,
   furigana TEXT,
-  study_order INTEGER
+  study_order INTEGER,
+  usually_kana INTEGER
 );
 CREATE TABLE word_forms (word_id INTEGER, text TEXT, kind TEXT, is_common INTEGER, position INTEGER);
 CREATE TABLE senses (word_id INTEGER, position INTEGER, pos TEXT, glosses TEXT, misc TEXT);
@@ -85,7 +86,7 @@ function inTransaction(database: DatabaseSync, insertAll: () => void): void {
 }
 
 function insertWords(database: DatabaseSync, words: BuiltWord[]): void {
-  const insertWord = database.prepare("INSERT INTO words VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+  const insertWord = database.prepare("INSERT INTO words VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
   const insertForm = database.prepare("INSERT INTO word_forms VALUES (?, ?, ?, ?, ?)");
   const insertSense = database.prepare("INSERT INTO senses VALUES (?, ?, ?, ?, ?)");
   const insertGloss = database.prepare("INSERT INTO glosses_fts (word_id, gloss) VALUES (?, ?)");
@@ -102,6 +103,7 @@ function insertWords(database: DatabaseSync, words: BuiltWord[]): void {
         word.romaji,
         word.furigana,
         word.studyOrder,
+        word.usuallyKana ? 1 : 0,
       );
       word.forms.forEach((form, position) =>
         insertForm.run(word.id, form.text, form.kind, form.isCommon ? 1 : 0, position),

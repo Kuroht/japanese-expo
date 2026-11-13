@@ -62,6 +62,7 @@ export function buildWord(word: RawWord, jlpt: number | null): BuiltWord {
     isCommon: isCommonWord(word),
     kanjiText,
     kanaText: kanaForm.text,
+    usuallyKana: word.sense[0]?.misc.includes("uk") ?? false,
     romaji: toRomaji(kanaForm.text),
     furigana: JSON.stringify(furigana),
     studyOrder: 0,

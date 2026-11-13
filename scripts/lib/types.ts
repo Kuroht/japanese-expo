@@ -58,6 +58,8 @@ export type BuiltWord = {
   isCommon: boolean;
   kanjiText: string | null;
   kanaText: string;
+  // True when JMdict says the first sense is usually written in kana alone (tag "uk").
+  usuallyKana: boolean;
   romaji: string;
   furigana: string; // JSON text
   studyOrder: number;

@@ -5,6 +5,7 @@ export type WordSearchResult = {
   id: number;
   kanjiText: string | null;
   kanaText: string;
+  usuallyKana: boolean;
   jlpt: number | null;
   isCommon: boolean;
   firstGlosses: string[];

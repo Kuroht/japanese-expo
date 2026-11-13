@@ -1,9 +1,10 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
+import { displayFurigana } from "@/shared/lib/displayForm";
+import { parseFurigana, parseStringList } from "@/shared/lib/parseJson";
 import type { SenseRow, SentenceRow, WordFormRow, WordRow } from "@/shared/db/types";
 
 import type { WordDetail } from "../types";
-import { parseFurigana, parseStringList } from "./parseJson";
 
 const SENTENCE_LIMIT = 2;
 
@@ -39,7 +40,14 @@ export async function getWordDetail(
     jlpt: word.jlpt,
     isCommon: word.is_common === 1,
     kanaText: word.kana_text,
-    furigana: parseFurigana(word.furigana, word.kanji_text ?? word.kana_text),
+    furigana: displayFurigana(
+      {
+        kanjiText: word.kanji_text,
+        kanaText: word.kana_text,
+        usuallyKana: word.usually_kana === 1,
+      },
+      parseFurigana(word.furigana, word.kanji_text ?? word.kana_text),
+    ),
     forms: forms.map((form) => ({
       text: form.text,
       kind: form.kind,

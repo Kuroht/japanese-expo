@@ -7,10 +7,23 @@ export type MatchCandidate = {
   order: number;
 };
 
-export type WordIndex = Map<string, MatchCandidate>;
+// One written form of a word. isPrimaryForm = the text is how the word is normally shown
+// (its kanji, or its kana when it has no kanji or is usually written in kana).
+export type IndexedForm = { text: string; isPrimaryForm: boolean };
 
-// True when "first" is a better match than "second":
-// JLPT words win, then common words, then the lowest study order.
+// What the index remembers per text: the candidate and whether the text is its primary form.
+export type IndexEntry = { candidate: MatchCandidate; isPrimaryForm: boolean };
+
+export type WordIndex = Map<string, IndexEntry>;
+
+// True when "first" is a better match than "second". A word whose primary form is this text
+// beats a word that only has it as a secondary reading (ここ is the word ここ, not 九).
+// Then: JLPT words win, then common words, then the lowest study order.
+function isBetterEntry(first: IndexEntry, second: IndexEntry): boolean {
+  if (first.isPrimaryForm !== second.isPrimaryForm) return first.isPrimaryForm;
+  return isBetterCandidate(first.candidate, second.candidate);
+}
+
 function isBetterCandidate(first: MatchCandidate, second: MatchCandidate): boolean {
   if (first.hasJlpt !== second.hasJlpt) return first.hasJlpt;
   if (first.isCommon !== second.isCommon) return first.isCommon;
@@ -19,15 +32,14 @@ function isBetterCandidate(first: MatchCandidate, second: MatchCandidate): boole
 
 // Builds a lookup from written text (kanji or kana form) to the best word for it.
 export function buildWordIndex(
-  entries: { candidate: MatchCandidate; forms: string[] }[],
+  entries: { candidate: MatchCandidate; forms: IndexedForm[] }[],
 ): WordIndex {
   const index: WordIndex = new Map();
   for (const { candidate, forms } of entries) {
-    for (const text of forms) {
+    for (const { text, isPrimaryForm } of forms) {
+      const entry: IndexEntry = { candidate, isPrimaryForm };
       const existing = index.get(text);
-      if (!existing || isBetterCandidate(candidate, existing)) {
-        index.set(text, candidate);
-      }
+      if (!existing || isBetterEntry(entry, existing)) index.set(text, entry);
     }
   }
   return index;
@@ -48,5 +60,5 @@ export function findWordId(
 ): number | null {
   if (SKIPPED_PARTS_OF_SPEECH.includes(partOfSpeech)) return null;
   const match = index.get(baseForm) ?? index.get(surface);
-  return match ? match.id : null;
+  return match ? match.candidate.id : null;
 }

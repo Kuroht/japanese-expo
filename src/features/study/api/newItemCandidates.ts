@@ -1,6 +1,8 @@
 import type { SQLiteDatabase } from "expo-sqlite";
-import { kanaItemProvider } from "@/features/kana";
+import { ALL_KANA_ENTRIES, kanaItemProvider } from "@/features/kana";
+import { wordItemProvider } from "@/features/vocab";
 
+import { mixCandidates } from "../lib/mixCandidates";
 import type { ItemRef } from "../types";
 
 // A provider suggests new items in the order they should be taught. It must not return more
@@ -11,9 +13,6 @@ export type NewItemProvider = (
   limit: number,
 ) => Promise<ItemRef[]>;
 
-// Providers are asked in this order. To teach a new kind of item, add ONE line here.
-const providers: NewItemProvider[] = [kanaItemProvider];
-
 // Every item that already exists (learning, known or suspended), as "type:key" text.
 async function loadExistingItemKeys(db: SQLiteDatabase): Promise<Set<string>> {
   const rows = await db.getAllAsync<{ item_type: string; item_key: string }>(
@@ -22,18 +21,22 @@ async function loadExistingItemKeys(db: SQLiteDatabase): Promise<Set<string>> {
   return new Set(rows.map((row) => `${row.item_type}:${row.item_key}`));
 }
 
+// True when every basic katakana already exists in `items` (learning or known).
+function areBasicKatakanaDone(isIntroduced: (itemType: string, itemKey: string) => boolean) {
+  return ALL_KANA_ENTRIES.filter(
+    (entry) => entry.script === "katakana" && entry.group === "basic",
+  ).every((entry) => isIntroduced("kana", entry.kana));
+}
+
 // The next items to teach, up to `limit`, skipping anything already in `items`.
+// Two providers (kana + loanwords, and words) each suggest items; mixCandidates interleaves them.
 export async function getNewItemCandidates(db: SQLiteDatabase, limit: number): Promise<ItemRef[]> {
   const existing = await loadExistingItemKeys(db);
   const isIntroduced = (itemType: string, itemKey: string) =>
     existing.has(`${itemType}:${itemKey}`);
+  const notIntroduced = (item: ItemRef) => !isIntroduced(item.itemType, item.itemKey);
 
-  const candidates: ItemRef[] = [];
-  for (const provider of providers) {
-    const room = limit - candidates.length;
-    if (room <= 0) break;
-    const found = await provider(db, isIntroduced, room);
-    candidates.push(...found.filter((item) => !isIntroduced(item.itemType, item.itemKey)));
-  }
-  return candidates.slice(0, limit);
+  const kanaList = (await kanaItemProvider(db, isIntroduced, limit)).filter(notIntroduced);
+  const wordList = (await wordItemProvider(db, isIntroduced, limit)).filter(notIntroduced);
+  return mixCandidates(kanaList, wordList, limit, areBasicKatakanaDone(isIntroduced));
 }

@@ -2,7 +2,7 @@ import type { SQLiteDatabase } from "expo-sqlite";
 import { isJapanese, isKana, toKana } from "wanakana";
 
 import type { WordSearchResult } from "../types";
-import { parseStringList } from "./parseJson";
+import { parseStringList } from "@/shared/lib/parseJson";
 import { queryByEnglish, queryByForm, type MatchedWordRow } from "./searchQueries";
 
 const RESULT_LIMIT = 50;
@@ -84,6 +84,7 @@ export async function searchWords(
     id: row.id,
     kanjiText: row.kanji_text,
     kanaText: row.kana_text,
+    usuallyKana: row.usually_kana === 1,
     jlpt: row.jlpt,
     isCommon: row.is_common === 1,
     firstGlosses: glossesByWord.get(row.id) ?? [],

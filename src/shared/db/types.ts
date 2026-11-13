@@ -10,6 +10,7 @@ export type WordRow = {
   romaji: string | null;
   furigana: string | null; // JSON FuriganaSegment[]
   study_order: number | null;
+  usually_kana: number | null; // 1 = show the kana form as the headword
 };
 
 export type WordFormRow = {

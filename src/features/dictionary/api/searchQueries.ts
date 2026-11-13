@@ -6,6 +6,7 @@ export type MatchedWordRow = {
   id: number;
   kanji_text: string | null;
   kana_text: string;
+  usually_kana: number | null;
   jlpt: number | null;
   is_common: number;
   match_rank: number;
@@ -14,7 +15,8 @@ export type MatchedWordRow = {
 
 const SEARCH_LIMIT = 50;
 
-const wordColumns = "w.id, w.kanji_text, w.kana_text, w.jlpt, w.is_common, w.study_order";
+const wordColumns =
+  "w.id, w.kanji_text, w.kana_text, w.usually_kana, w.jlpt, w.is_common, w.study_order";
 const orderBy = "ORDER BY match_rank, (w.study_order IS NULL), w.study_order";
 
 // LIKE treats % and _ as wildcards, so escape them in what the user typed.

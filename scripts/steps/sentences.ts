@@ -4,7 +4,7 @@ import { alignFurigana, type FuriganaSegment } from "../lib/furigana";
 import { katakanaToHiragana } from "../lib/kana";
 import { selectSentences } from "../lib/sentenceSelection";
 import { buildWordIndex, findWordId, type WordIndex } from "../lib/tokenMatch";
-import type { BuiltWord, SentenceRow } from "../lib/types";
+import type { BuiltWord, SentenceRow, WordForm } from "../lib/types";
 import { applyRanking } from "./words";
 import { loadSentencePairs, type SentencePair } from "./tatoebaSource";
 
@@ -50,6 +50,14 @@ function tokenizeAll(
   });
 }
 
+// The form a learner sees as the word: its kanji, or its kana when it has no kanji or is
+// usually written in kana. Other kana readings of a kanji word are only secondary.
+function isPrimaryForm(word: BuiltWord, form: WordForm): boolean {
+  if (form.kind === "kanji") return form.text === word.kanjiText;
+  const kanaIsHeadword = word.kanjiText === null || word.usuallyKana;
+  return kanaIsHeadword && form.text === word.kanaText;
+}
+
 // Makes the lookup from base form to the best kept word.
 // "orderOf" decides the last tie-breaker (preliminary: id, final: study order).
 function makeIndex(words: BuiltWord[], orderOf: (word: BuiltWord) => number): WordIndex {
@@ -62,7 +70,9 @@ function makeIndex(words: BuiltWord[], orderOf: (word: BuiltWord) => number): Wo
         order: orderOf(word),
       },
       // Only usual spellings, so a rare irregular form can't steal a common word's text.
-      forms: word.forms.filter((form) => form.isUsual).map((form) => form.text),
+      forms: word.forms
+        .filter((form) => form.isUsual)
+        .map((form) => ({ text: form.text, isPrimaryForm: isPrimaryForm(word, form) })),
     })),
   );
 }

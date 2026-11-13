@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { displayForm } from "@/shared/lib/displayForm";
 import { useTheme } from "@/shared/hooks/useTheme";
 
 import type { WordSearchResult } from "../types";
@@ -13,8 +14,8 @@ type WordResultRowProps = {
 
 export function WordResultRow({ word }: WordResultRowProps) {
   const colors = useTheme();
-  const headword = word.kanjiText ?? word.kanaText;
-  const showReading = word.kanjiText !== null;
+  const headword = displayForm(word);
+  const showReading = headword !== word.kanaText;
   const meanings = word.firstGlosses.join("; ");
 
   const openWord = () => router.push({ pathname: "/word/[id]", params: { id: String(word.id) } });
