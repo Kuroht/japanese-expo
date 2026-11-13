@@ -1,7 +1,9 @@
 import type { StudyRating, SessionStep } from "../types";
+import { ComponentMeaningCard } from "./ComponentMeaningCard";
 import { IntroStep } from "./IntroStep";
 import { KanaRecognitionCard } from "./KanaRecognitionCard";
 import { KanaReverseCard } from "./KanaReverseCard";
+import { KanjiMeaningCard } from "./KanjiMeaningCard";
 import { LoanwordReadingCard } from "./LoanwordReadingCard";
 import { SessionMessage } from "./SessionMessage";
 import { WordListeningCard } from "./WordListeningCard";
@@ -60,6 +62,14 @@ export function SessionStepView({
   }
   if (card.item_type === "word" && card.card_type === "speaking") {
     return <WordSpeakingCard key={key} card={card} showHardEasy={showHardEasy} onGrade={onGrade} />;
+  }
+  if (card.item_type === "kanji" && card.card_type === "meaning") {
+    return <KanjiMeaningCard key={key} card={card} showHardEasy={showHardEasy} onGrade={onGrade} />;
+  }
+  if (card.item_type === "component" && card.card_type === "meaning") {
+    return (
+      <ComponentMeaningCard key={key} card={card} showHardEasy={showHardEasy} onGrade={onGrade} />
+    );
   }
   return <SessionMessage isError message="This kind of card is not supported yet." />;
 }

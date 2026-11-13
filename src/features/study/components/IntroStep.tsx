@@ -4,7 +4,9 @@ import { useTheme } from "@/shared/hooks/useTheme";
 
 import type { ItemRef } from "../types";
 import { CardLayout } from "./CardLayout";
+import { ComponentIntro } from "./ComponentIntro";
 import { KanaIntro } from "./KanaIntro";
+import { KanjiIntro } from "./KanjiIntro";
 import { LoanwordIntro } from "./LoanwordIntro";
 import { StudyButton } from "./StudyButton";
 import { WordIntro } from "./WordIntro";
@@ -15,6 +17,8 @@ function IntroContent({ item }: { item: ItemRef }) {
   if (item.itemType === "kana") return <KanaIntro kana={item.itemKey} />;
   if (item.itemType === "loanword") return <LoanwordIntro itemKey={item.itemKey} />;
   if (item.itemType === "word") return <WordIntro itemKey={item.itemKey} />;
+  if (item.itemType === "kanji") return <KanjiIntro itemKey={item.itemKey} />;
+  if (item.itemType === "component") return <ComponentIntro itemKey={item.itemKey} />;
   return <Text style={{ color: colors.mutedText }}>{item.itemKey}</Text>;
 }
 
