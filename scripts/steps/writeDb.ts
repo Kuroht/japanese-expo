@@ -16,6 +16,7 @@ import type {
   KanjiComponentRow,
   KanjiRow,
   KanjiStrokesRow,
+  MnemonicRow,
   SentenceRow,
 } from "../lib/types";
 
@@ -31,6 +32,7 @@ export type ContentData = {
   components: ComponentRow[];
   kanjiComponents: KanjiComponentRow[];
   strokes: KanjiStrokesRow[];
+  mnemonics: MnemonicRow[];
   sentences: SentenceRow[];
 };
 
@@ -128,6 +130,7 @@ function insertKanjiTables(database: DatabaseSync, data: ContentData): void {
   const insertComponent = database.prepare("INSERT INTO components VALUES (?, ?, ?, ?)");
   const insertKanjiComponent = database.prepare("INSERT INTO kanji_components VALUES (?, ?, ?)");
   const insertStrokes = database.prepare("INSERT INTO kanji_strokes VALUES (?, ?, ?)");
+  const insertMnemonic = database.prepare("INSERT INTO default_mnemonics VALUES (?, ?)");
 
   inTransaction(database, () => {
     for (const row of data.kanji) {
@@ -148,6 +151,7 @@ function insertKanjiTables(database: DatabaseSync, data: ContentData): void {
       insertKanjiComponent.run(row.kanji, row.component, row.position);
     for (const row of data.strokes)
       insertStrokes.run(row.kanji, row.viewBox, JSON.stringify(row.paths));
+    for (const row of data.mnemonics) insertMnemonic.run(row.kanji, row.text);
   });
 }
 

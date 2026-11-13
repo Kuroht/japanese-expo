@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { ALL_KANA_ENTRIES, kanaItemProvider } from "@/features/kana";
+import { expandWithPrerequisites, kanjiLookup } from "@/features/kanji";
 import { wordItemProvider } from "@/features/vocab";
 
 import { mixCandidates } from "../lib/mixCandidates";
@@ -38,5 +39,11 @@ export async function getNewItemCandidates(db: SQLiteDatabase, limit: number): P
 
   const kanaList = (await kanaItemProvider(db, isIntroduced, limit)).filter(notIntroduced);
   const wordList = (await wordItemProvider(db, isIntroduced, limit)).filter(notIntroduced);
-  return mixCandidates(kanaList, wordList, limit, areBasicKatakanaDone(isIntroduced));
+  const mixed = mixCandidates(kanaList, wordList, limit, areBasicKatakanaDone(isIntroduced));
+
+  // Phase 3: put each new word's kanji (and their components) just before the word.
+  // Kana and loanword items pass through. The result is trimmed to `limit` without
+  // splitting a word from its prerequisites.
+  const lookup = await kanjiLookup(db, mixed);
+  return expandWithPrerequisites(mixed, lookup, isIntroduced, limit);
 }

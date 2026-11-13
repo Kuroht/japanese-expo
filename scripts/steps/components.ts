@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { pickComponentName, splitMissingNames, type CustomNames } from "../lib/componentNames";
 import { parseKangxiNames } from "../lib/radicals";
 import type { ComponentRow, KanjiComponentRow, KanjiRow } from "../lib/types";
 import { assertKradfileFormat, assertUnicodeDataFormat } from "../lib/validators";
@@ -13,17 +14,29 @@ export type ComponentsResult = {
   kanjiComponents: KanjiComponentRow[];
 };
 
-// Picks a name for one component: Unicode Kangxi first, then data/components.json.
-function findName(
-  char: string,
-  kangxiNames: Map<string, string>,
-  customNames: Record<string, string>,
-): Pick<ComponentRow, "name" | "source"> | null {
-  const kangxiName = kangxiNames.get(char);
-  if (kangxiName) return { name: kangxiName, source: "kangxi" };
-  const customName = customNames[char];
-  if (customName) return { name: customName, source: "custom" };
-  return null;
+// A component with no name is an ERROR when a taught kanji (N5/N4) uses it, else a warning.
+function reportMissingNames(
+  missingNames: string[],
+  kanjiRows: KanjiRow[],
+  kanjiComponents: KanjiComponentRow[],
+): void {
+  const taughtKanji = new Set(
+    kanjiRows.filter((row) => row.jlpt === 5 || row.jlpt === 4).map((row) => row.char),
+  );
+  const taughtComponents = new Set(
+    kanjiComponents.filter((row) => taughtKanji.has(row.kanji)).map((row) => row.component),
+  );
+  const { errors, warnings } = splitMissingNames(missingNames, taughtComponents);
+  if (warnings.length > 0) {
+    console.warn(
+      `WARNING: ${warnings.length} components have no name (not used by N5/N4 kanji): ${warnings.join(" ")}`,
+    );
+  }
+  if (errors.length > 0) {
+    throw new Error(
+      `${errors.length} components used by N5/N4 kanji have no name. Add them to data/components.json: ${errors.join(" ")}`,
+    );
+  }
 }
 
 // Builds kanji_components and components from KRADFILE for the kept kanji.
@@ -38,7 +51,7 @@ export function loadComponents(
   const unicodeText = readFileSync(UNICODE_DATA_FILE, "utf8");
   assertUnicodeDataFormat("UnicodeData.txt", unicodeText);
   const kangxiNames = parseKangxiNames(unicodeText);
-  const customNames: Record<string, string> = JSON.parse(readFileSync(CUSTOM_NAMES_FILE, "utf8"));
+  const customNames: CustomNames = JSON.parse(readFileSync(CUSTOM_NAMES_FILE, "utf8"));
 
   const kanjiComponents: KanjiComponentRow[] = [];
   const distinctComponents = new Set<string>();
@@ -52,7 +65,7 @@ export function loadComponents(
 
   const missingNames: string[] = [];
   const components: ComponentRow[] = [...distinctComponents].map((char) => {
-    const found = findName(char, kangxiNames, customNames);
+    const found = pickComponentName(char, kangxiNames, customNames);
     if (!found) missingNames.push(char);
     return {
       char,
@@ -62,10 +75,6 @@ export function loadComponents(
     };
   });
 
-  if (missingNames.length > 0) {
-    console.warn(
-      `WARNING: ${missingNames.length} components have no name. First 20: ${missingNames.slice(0, 20).join(" ")}`,
-    );
-  }
+  reportMissingNames(missingNames, kanjiRows, kanjiComponents);
   return { components, kanjiComponents };
 }

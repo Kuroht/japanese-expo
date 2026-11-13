@@ -8,7 +8,7 @@ export type ItemType = "kana" | "loanword" | "word" | "kanji" | "component";
 export type ItemRef = { itemType: ItemType; itemKey: string };
 
 // How a card quizzes its item (each item type has its own card types).
-export type CardType = "recognition" | "reverse" | "reading" | "listening" | "speaking";
+export type CardType = "recognition" | "reverse" | "reading" | "listening" | "speaking" | "meaning";
 
 // The FSRS scheduling state of one card. Dates are epoch milliseconds.
 export type CardFields = {

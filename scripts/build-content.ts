@@ -4,6 +4,7 @@ import { loadJlptKanjiLevels, loadJlptWordLevels } from "./steps/jlpt";
 import { loadWords } from "./steps/words";
 import { loadKanji } from "./steps/kanji";
 import { loadComponents } from "./steps/components";
+import { loadMnemonics } from "./steps/mnemonics";
 import { loadStrokes } from "./steps/strokes";
 import { loadSentences } from "./steps/sentences";
 import { printSummary, writeDatabase } from "./steps/writeDb";
@@ -41,6 +42,9 @@ async function main(): Promise<void> {
   logStep("6. strokes");
   const strokes = loadStrokes(kanji.rows);
 
+  const mnemonics = loadMnemonics(kanji.rows);
+  console.log(`  ${mnemonics.length} default mnemonics`);
+
   logStep("7. sentences");
   const { sentences, candidateCount } = await loadSentences(words);
   console.log(`  kept ${sentences.length} of ${candidateCount} candidate sentences`);
@@ -52,6 +56,7 @@ async function main(): Promise<void> {
     components,
     kanjiComponents,
     strokes,
+    mnemonics,
     sentences,
   });
   printSummary(databasePath);

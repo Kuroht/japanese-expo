@@ -113,3 +113,8 @@ export type SentenceRow = {
   tokens: SentenceToken[];
   wordIds: number[];
 };
+
+export type MnemonicRow = {
+  kanji: string;
+  text: string;
+};

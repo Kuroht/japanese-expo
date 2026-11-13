@@ -4,8 +4,6 @@ import { pickWordCandidates, type WordCandidateRow } from "../lib/pickWordCandid
 import type { WordItemRef } from "../types";
 
 // The new-item provider for JMdict words (the study engine asks it for new items).
-// PHASE 3 HOOK: when kanji are taught, insert each word's kanji prerequisites BEFORE the
-// word here (return the kanji items first, then the word).
 export async function wordItemProvider(
   db: SQLiteDatabase,
   isIntroduced: (itemType: string, itemKey: string) => boolean,

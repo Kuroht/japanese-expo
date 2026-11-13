@@ -4,7 +4,7 @@
 // Bump this whenever the content DB changes. The app opens assets/content-v{N}.db.
 // Bump this whenever the content DB changes, even for a small fix. The phone only
 // copies a new content file when the version (and so the file name) changes.
-export const CONTENT_VERSION = 2;
+export const CONTENT_VERSION = 3;
 
 const JMDICT_VERSION = "3.6.2+20261109214828";
 const JMDICT_PREFIX = `https://github.com/scriptin/jmdict-simplified/releases/download/${encodeURIComponent(JMDICT_VERSION)}/`;
