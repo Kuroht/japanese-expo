@@ -1,0 +1,34 @@
+import * as Speech from "expo-speech";
+import { useCallback, useEffect, useState } from "react";
+
+type SpeakOptions = { rate?: number };
+
+// Speaks Japanese text aloud and reports whether a Japanese voice is installed.
+// hasJapaneseVoice is null while we are still checking.
+export function useSpeech() {
+  const [hasJapaneseVoice, setHasJapaneseVoice] = useState<boolean | null>(null);
+
+  // Ask the text-to-speech engine which voices it has, once.
+  useEffect(() => {
+    let isActive = true;
+    Speech.getAvailableVoicesAsync()
+      .then((voices) => {
+        const found = voices.some((voice) => voice.language.toLowerCase().startsWith("ja"));
+        if (isActive) setHasJapaneseVoice(found);
+      })
+      .catch(() => {
+        if (isActive) setHasJapaneseVoice(false);
+      });
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  // Stops anything already playing so taps never queue up.
+  const speak = useCallback((text: string, options: SpeakOptions = {}) => {
+    Speech.stop();
+    Speech.speak(text, { language: "ja-JP", rate: options.rate ?? 1.0 });
+  }, []);
+
+  return { speak, hasJapaneseVoice };
+}
