@@ -1,6 +1,6 @@
-import { PlaceholderScreen } from "@/shared/components/PlaceholderScreen";
+import { SettingsScreen } from "@/features/settings";
 
-// Route file: only places a screen. The real screen comes from a feature folder.
+// Route file: only places a screen from the settings feature.
 export default function SettingsTab() {
-  return <PlaceholderScreen message="Settings arrive in Phase 1." />;
+  return <SettingsScreen />;
 }
