@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-import { buildSession } from "../lib/buildSession";
+import { buildSession, newItemLimit } from "../lib/buildSession";
 import type { SessionPlan } from "../types";
 import { countIntroducedToday, loadDueCards } from "./cardQueries";
 import { getNewItemCandidates } from "./newItemCandidates";
@@ -12,7 +12,9 @@ export async function previewSession(db: SQLiteDatabase, now: number): Promise<S
   const settings = await loadSettings(db);
   const dueCards = await loadDueCards(db, now);
   const introducedToday = await countIntroducedToday(db, now);
-  const newItemCandidates = await getNewItemCandidates(db, settings.newItemsPerDay);
+  const dueNowCount = dueCards.filter((card) => card.due <= now).length;
+  const limit = newItemLimit(dueNowCount, introducedToday, settings);
+  const newItemCandidates = limit > 0 ? await getNewItemCandidates(db, limit) : [];
 
   return buildSession({ dueCards, newItemCandidates, introducedToday, settings, now });
 }

@@ -18,7 +18,9 @@ function sortByForgetting(cards: CardRow[], now: number): CardRow[] {
 
 // How many new items to allow. A big backlog means fewer (or no) new items,
 // so skipping days never makes the next session heavier.
-function newItemLimit(dueCount: number, introducedToday: number, settings: StudySettings) {
+// Exported so the session APIs can ask the providers for exactly this many items: then the
+// kanji-prerequisite trimming (which never splits a word from its kanji) uses the real limit.
+export function newItemLimit(dueCount: number, introducedToday: number, settings: StudySettings) {
   const remainingToday = Math.max(0, settings.newItemsPerDay - introducedToday);
   if (dueCount > 3 * settings.maxReviewsPerSession) return 0;
   if (dueCount > settings.maxReviewsPerSession) return Math.floor(remainingToday / 2);
