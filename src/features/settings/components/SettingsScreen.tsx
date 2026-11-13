@@ -3,6 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 
 import { useTheme } from "@/shared/hooks/useTheme";
 
+import { BackupSection } from "./BackupSection";
+import { ReadingSettingsSection } from "./ReadingSettingsSection";
 import { StudySettingsSection } from "./StudySettingsSection";
 
 // The Settings tab: study settings and a link to the Credits screen.
@@ -10,6 +12,8 @@ export function SettingsScreen() {
   return (
     <ScrollView contentContainerStyle={styles.screen}>
       <StudySettingsSection />
+      <ReadingSettingsSection />
+      <BackupSection />
       <LinkRow label="Words I already know" href="/vocab" />
       <LinkRow label="Credits" href="/credits" />
     </ScrollView>

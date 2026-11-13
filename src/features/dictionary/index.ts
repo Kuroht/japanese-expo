@@ -4,3 +4,4 @@ export { WordDetailScreen } from "./components/WordDetailScreen";
 export { addWordToStudyQueue, isWordQueuedOrStudied } from "./api/studyQueue";
 export type { WordStudyState } from "./api/studyQueue";
 export { queueFirst } from "./lib/queueFirst";
+export { AddToStudyButton } from "./components/AddToStudyButton";

@@ -7,7 +7,9 @@ import { useSpeech } from "@/shared/hooks/useSpeech";
 import { useTheme } from "@/shared/hooks/useTheme";
 
 import type { WordDetail } from "../types";
+import { AddToStudyButton } from "./AddToStudyButton";
 import { ExampleSentenceRow } from "./ExampleSentenceRow";
+import { HeadwordKanjiLinks } from "./HeadwordKanjiLinks";
 import { SenseList } from "./SenseList";
 import { WordTags } from "./WordTags";
 
@@ -40,6 +42,8 @@ export function WordDetailContent({ word }: { word: WordDetail }) {
       {showReading ? (
         <Text style={[styles.reading, { color: colors.mutedText }]}>{word.kanaText}</Text>
       ) : null}
+      <HeadwordKanjiLinks headword={headword} />
+      <AddToStudyButton wordId={word.id} />
       <WordTags jlpt={word.jlpt} isCommon={word.isCommon} />
       {hasJapaneseVoice === false ? <NoJapaneseVoiceBanner /> : null}
 

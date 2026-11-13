@@ -3,7 +3,7 @@ import { Tabs } from "expo-router";
 import { TabIcon } from "@/shared/components/TabIcon";
 import { useTheme } from "@/shared/hooks/useTheme";
 
-// Bottom tab bar: Study, Dictionary and Settings.
+// Bottom tab bar: Study, Read, Dictionary and Settings.
 export default function TabLayout() {
   const colors = useTheme();
 
@@ -23,6 +23,13 @@ export default function TabLayout() {
         options={{
           title: "Study",
           tabBarIcon: ({ color, size }) => <TabIcon name="school" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="read"
+        options={{
+          title: "Read",
+          tabBarIcon: ({ color, size }) => <TabIcon name="book" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
