@@ -11,7 +11,7 @@ export async function markWordsKnown(db: SQLiteDatabase, wordIds: number[]): Pro
       const itemKey = String(wordId);
       await db.runAsync(
         `INSERT INTO items (item_type, item_key, status, introduced_at) VALUES ('word', ?, 'known', NULL)
-         ON CONFLICT(item_type, item_key) DO UPDATE SET status = 'known'`,
+         ON CONFLICT(item_type, item_key) DO UPDATE SET status = 'known', introduced_at = NULL`,
         [itemKey],
       );
       await db.runAsync("DELETE FROM cards WHERE item_type = 'word' AND item_key = ?", [itemKey]);

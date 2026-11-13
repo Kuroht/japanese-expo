@@ -44,12 +44,18 @@ export function SessionScreen() {
         />
       ) : null}
       {session.status === "running" && currentStep ? (
-        <SessionStepView
-          step={currentStep}
-          showHardEasy={session.showHardEasy}
-          onIntroDone={session.completeIntro}
-          onGrade={session.gradeCard}
-        />
+        // While an answer is being saved, taps are ignored and the card is dimmed.
+        <View
+          style={[styles.stepArea, session.isSaving && styles.saving]}
+          pointerEvents={session.isSaving ? "none" : "auto"}
+        >
+          <SessionStepView
+            step={currentStep}
+            showHardEasy={session.showHardEasy}
+            onIntroDone={session.completeIntro}
+            onGrade={session.gradeCard}
+          />
+        </View>
       ) : null}
       {session.status === "running" && !currentStep ? <FinishedView session={session} /> : null}
     </SafeAreaView>
@@ -78,6 +84,8 @@ function FinishedView({ session }: { session: ReturnType<typeof useStudySession>
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  stepArea: { flex: 1 },
+  saving: { opacity: 0.6 },
   topBar: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 12 },
   close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   closeText: { fontSize: 22 },

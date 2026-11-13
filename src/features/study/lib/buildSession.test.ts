@@ -1,7 +1,7 @@
 import { Rating } from "ts-fsrs";
 
 import type { CardRow, ItemRef, StudySettings } from "../types";
-import { buildSession } from "./buildSession";
+import { buildSession, freshItemLimit, newItemLimit } from "./buildSession";
 import { gradeCard, newCardRow } from "./fsrs";
 import { DEFAULT_STUDY_SETTINGS, estimateMinutes } from "./studySettings";
 
@@ -32,9 +32,15 @@ const candidates: ItemRef[] = Array.from({ length: 20 }, (_, index) => ({
   itemKey: `c${index}`,
 }));
 
-function plan(dueCards: CardRow[], introducedToday = 0, settings: Partial<StudySettings> = {}) {
+function plan(
+  dueCards: CardRow[],
+  introducedToday = 0,
+  settings: Partial<StudySettings> = {},
+  unseenItems: ItemRef[] = [],
+) {
   return buildSession({
     dueCards,
+    unseenItems,
     newItemCandidates: candidates,
     introducedToday,
     settings: { ...DEFAULT_STUDY_SETTINGS, ...settings },
@@ -62,22 +68,58 @@ describe("buildSession", () => {
     expect(due.filter((card) => !result.reviews.includes(card))).toHaveLength(10);
   });
 
-  it("limits new items by newItemsPerDay minus introducedToday", () => {
-    expect(plan([]).newItems).toHaveLength(8);
-    expect(plan([], 5).newItems).toHaveLength(3);
+  it("keeps the whole first group even when it is bigger than the limit", () => {
+    // The providers already trimmed to the limit; a word and its 2 kanji must stay together.
+    const group = candidates.slice(0, 3);
+    const result = buildSession({
+      dueCards: [],
+      unseenItems: [],
+      newItemCandidates: group,
+      introducedToday: 7, // limit is 1
+      settings: DEFAULT_STUDY_SETTINGS,
+      now: NOW,
+    });
+    expect(result.newItems).toEqual(group);
+  });
+
+  it("gives no fresh items when the limit is 0", () => {
     expect(plan([], 8).newItems).toHaveLength(0);
-    expect(plan([], 20).newItems).toHaveLength(0);
   });
 
-  it("halves new items when the backlog is above the cap", () => {
-    expect(plan(makeDueCards(61)).newItems).toHaveLength(4);
+  it("puts unseen items first and keeps them out of the reviews", () => {
+    const unseen: ItemRef[] = [{ itemType: "kana", itemKey: "u0" }];
+    const result = plan([], 0, {}, unseen);
+    expect(result.newItems[0]).toEqual(unseen[0]);
+    expect(result.reviews).toHaveLength(0);
+  });
+});
+
+describe("newItemLimit", () => {
+  it("is newItemsPerDay minus introducedToday", () => {
+    expect(newItemLimit(0, 0, DEFAULT_STUDY_SETTINGS)).toBe(8);
+    expect(newItemLimit(0, 5, DEFAULT_STUDY_SETTINGS)).toBe(3);
+    expect(newItemLimit(0, 8, DEFAULT_STUDY_SETTINGS)).toBe(0);
+    expect(newItemLimit(0, 20, DEFAULT_STUDY_SETTINGS)).toBe(0);
   });
 
-  it("allows no new items when the backlog is above 3x the cap", () => {
-    expect(plan(makeDueCards(181)).newItems).toHaveLength(0);
-    expect(plan(makeDueCards(180)).newItems).toHaveLength(4);
+  it("halves when the backlog is above the cap", () => {
+    expect(newItemLimit(61, 0, DEFAULT_STUDY_SETTINGS)).toBe(4);
   });
 
+  it("is 0 when the backlog is above 3x the cap", () => {
+    expect(newItemLimit(181, 0, DEFAULT_STUDY_SETTINGS)).toBe(0);
+    expect(newItemLimit(180, 0, DEFAULT_STUDY_SETTINGS)).toBe(4);
+  });
+});
+
+describe("freshItemLimit", () => {
+  it("takes the unseen items off the limit, never below 0", () => {
+    expect(freshItemLimit(8, 3)).toBe(5);
+    expect(freshItemLimit(2, 5)).toBe(0);
+  });
+});
+
+describe("buildSession backlog", () => {
   it("spreads a backlog over several sessions", () => {
     const due = makeDueCards(130);
     const first = plan(due);

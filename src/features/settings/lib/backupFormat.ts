@@ -1,46 +1,20 @@
 import { progressMigrations } from "@/shared/db/progressMigrations";
 
-// The progress tables and their columns, in the order they are exported.
-// Keep this in sync with progressMigrations.ts: a new column there needs adding here too.
-export const BACKUP_COLUMNS = {
-  items: ["item_type", "item_key", "status", "introduced_at"],
-  cards: [
-    "id",
-    "item_type",
-    "item_key",
-    "card_type",
-    "due",
-    "stability",
-    "difficulty",
-    "elapsed_days",
-    "scheduled_days",
-    "learning_steps",
-    "reps",
-    "lapses",
-    "state",
-    "last_review",
-  ],
-  review_log: [
-    "id",
-    "card_id",
-    "rating",
-    "state",
-    "due",
-    "stability",
-    "difficulty",
-    "elapsed_days",
-    "last_elapsed_days",
-    "scheduled_days",
-    "reviewed_at",
-    "duration_ms",
-  ],
-  study_queue: ["item_type", "item_key", "added_at"],
-  mnemonic_edits: ["kanji", "text", "updated_at"],
-  settings: ["key", "value"],
-} as const;
+import {
+  BACKUP_COLUMNS,
+  BACKUP_SCHEMA,
+  ITEM_STATUSES,
+  NUMBER_RANGES,
+  type BackupTableName,
+  type ColumnKind,
+} from "./backupSchema";
 
-export type BackupTableName = keyof typeof BACKUP_COLUMNS;
-export const BACKUP_TABLE_NAMES = Object.keys(BACKUP_COLUMNS) as BackupTableName[];
+export { BACKUP_COLUMNS };
+export type { BackupTableName };
+export const BACKUP_TABLE_NAMES = Object.keys(BACKUP_SCHEMA) as BackupTableName[];
+
+// A backup file larger than this is refused before it is read into memory.
+export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;
 
 export const BACKUP_APP_NAME = "japanese-expo";
 
@@ -58,20 +32,48 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-// Checks one table's rows: every row is an object holding every expected column with a simple value.
+// True when the value fits the column kind (see backupSchema.ts).
+function fitsKind(value: unknown, kind: ColumnKind): boolean {
+  if (value === null) return kind.endsWith("?");
+  if (kind === "text") return typeof value === "string";
+  if (kind === "real") return typeof value === "number" && Number.isFinite(value);
+  return Number.isSafeInteger(value);
+}
+
+// Checks the allowed values of one column, such as items.status or review_log.rating.
+// The kind was already checked, so a range column is known to be a number here.
+function hasAllowedValue(table: BackupTableName, column: string, value: unknown): boolean {
+  if (table === "items" && column === "status") return ITEM_STATUSES.includes(value as string);
+  const range = NUMBER_RANGES.find((entry) => entry.table === table && entry.column === column);
+  if (!range) return true;
+  return (value as number) >= range.min && (value as number) <= range.max;
+}
+
+// Checks one table: every row is an object and every column has the right kind and value.
 function validateRows(table: BackupTableName, rows: unknown[]): void {
+  const kinds: Record<string, ColumnKind> = BACKUP_SCHEMA[table];
   rows.forEach((row, index) => {
     if (!isPlainObject(row)) {
       throw new Error(`Backup table "${table}": row ${index + 1} is not an object.`);
     }
     for (const column of BACKUP_COLUMNS[table]) {
       const value = row[column];
-      const isSimple = value === null || typeof value === "string" || typeof value === "number";
-      if (!isSimple) {
+      if (!fitsKind(value, kinds[column]) || !hasAllowedValue(table, column, value)) {
         throw new Error(`Backup table "${table}": row ${index + 1} has a bad "${column}" value.`);
       }
     }
   });
+}
+
+// A learning item with no cards would never be shown or scheduled, so the file is broken.
+function checkLearningItemsHaveCards(tables: Record<BackupTableName, BackupRow[]>): void {
+  const keyOf = (row: BackupRow) => `${row.item_type}:${row.item_key}`;
+  const itemsWithCards = new Set(tables.cards.map(keyOf));
+  for (const item of tables.items) {
+    if (item.status === "learning" && !itemsWithCards.has(keyOf(item))) {
+      throw new Error(`Backup item "${item.item_key}" is being learned but has no cards.`);
+    }
+  }
 }
 
 // Checks that parsed JSON really is a backup this app version can restore.
@@ -96,7 +98,17 @@ export function validateBackup(json: unknown): BackupFile {
     if (!Array.isArray(rows)) throw new Error(`Backup table "${table}" is missing.`);
     validateRows(table, rows);
   }
-  return json as BackupFile;
+  const backup = json as BackupFile;
+  checkLearningItemsHaveCards(backup.tables);
+  return backup;
+}
+
+// The summary shown before an import replaces everything: when it was made and how big it is.
+export function describeBackup(backup: BackupFile): string {
+  const { items, cards, review_log: reviews } = backup.tables;
+  const madeAt = new Date(backup.exportedAt);
+  const dateText = Number.isNaN(madeAt.getTime()) ? backup.exportedAt : madeAt.toLocaleString();
+  return `Backup from ${dateText}: ${items.length} items, ${cards.length} cards, ${reviews.length} reviews.`;
 }
 
 export type InsertStatements = {

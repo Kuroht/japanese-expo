@@ -45,4 +45,13 @@ A fresh clone must run `npm run build:content` once before `npm start`, because 
 - **Tatoeba** comes from the all-languages `sentences.tar.bz2`, because Windows `tar` can't unpack the bare per-language `.tsv.bz2` files. On Windows the pipeline calls `%SystemRoot%\System32\tar.exe`, since Git Bash's GNU tar misreads `F:` paths. The first download is about 370 MB and is cached in `scripts/.cache/`.
 - **Frequency:** jmdict-simplified has no nfXX/ichi priority tags, so `freq_rank` = how many kept Tatoeba sentences contain the word, with common words winning ties. `study_order` = JLPT level (N5 first), then `freq_rank`.
 - **Sentence cap:** at most 5 examples per word (`MAX_SENTENCES_PER_WORD` in `scripts/steps/sentences.ts`) keeps the DB at about 51 MB. A sentence is kept while any of its words still needs examples.
+- **Study engine (`features/study`):**
+  - **Items and cards:** an item is (item_type, item_key), and each card type gets its own FSRS card (`cardTypesFor`). The item types are kana, loanword, word, kanji and component.
+  - **Building a session:** `prepareSession` picks due cards (most likely forgotten first, capped at `maxReviewsPerSession`) plus new items (`newItemLimit` halves them when the backlog is over the cap, and gives none above 3x). It introduces the new items up front.
+  - **New-item order:** `study_queue` (words added by hand) first, then kana and words mixed by `mixCandidates`. Then `expandWithPrerequisites` puts each word's unlearned N5/N4 kanji, and their components, just before the word.
+  - **Hiragana** turns a first Good into Easy, so it graduates fast.
+  - FSRS uses ts-fsrs's legacy synchronous `fsrs()` API (FSRS-6).
+- **Feature dependencies (no cycles):** study → kana, vocab, kanji, dictionary. vocab must not import study, which is why `markWordsKnown` lives in vocab. reading → dictionary. settings → study, reading.
+- **Content data written by Claude:** `data/components.json` (component names; overrides Kangxi names) and `data/mnemonics.json` (245 N5/N4 kanji). The user edits mnemonics in the app (`mnemonic_edits`, never overwritten).
+- **Backup:** Settings → Export/Import copies all 6 progress tables as JSON. Import replaces everything in one transaction. `BACKUP_COLUMNS` in `features/settings/lib/backupFormat.ts` must change with any progress migration.
 - **Primary forms:** `words.kanji_text` / `kana_text` skip rare or irregular forms (sK/rK/iK/oK). All forms stay in `word_forms` for search. `glosses_fts` has one row per gloss, so group by `word_id`.

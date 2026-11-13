@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Alert } from "react-native";
 
 import { exportProgress, importProgress, pickAndReadBackup } from "../api/progressBackup";
-import type { BackupFile } from "../lib/backupFormat";
+import { describeBackup, type BackupFile } from "../lib/backupFormat";
 
 // Export and import of all progress, with a busy flag and an error message for the screen.
 export function useBackup() {
@@ -43,7 +43,7 @@ export function useBackup() {
       if (!backup) return;
       Alert.alert(
         "Replace all progress?",
-        "Everything on this phone will be replaced by the backup.",
+        `${describeBackup(backup)}\n\nEverything on this phone will be replaced. A copy of your current progress is saved first.`,
         [
           { text: "Cancel", style: "cancel" },
           { text: "Replace", style: "destructive", onPress: () => void replaceProgress(backup) },

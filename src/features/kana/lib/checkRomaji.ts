@@ -40,11 +40,16 @@ function normalize(text: string): string {
   return expandLongVowels(toHiragana(singleN));
 }
 
+// Kana letters (not the long-vowel mark ー, which is only a spelling aid).
+const KANA_LETTER = /[ぁ-ゖァ-ヺ]/;
+
 // True if the typed romaji is a correct reading of the kana (or whole katakana word).
+// The answer must be romaji: typing kana is always wrong, otherwise the hiragana of a
+// katakana prompt would pass.
 // wanakana turns shi/si, tsu/tu, chi/ti, ji/zi, fu/hu and "nn" into the same kana for us.
 export function checkRomaji(answerKana: string, typedText: string): boolean {
   const typed = typedText.trim().toLowerCase();
-  if (typed === "") return false;
+  if (typed === "" || KANA_LETTER.test(typed)) return false;
 
   const expected = normalize(answerKana);
   const spellings = [typed];

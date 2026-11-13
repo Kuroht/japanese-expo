@@ -10,6 +10,7 @@ type OnGrade = (rating: StudyRating, durationMs: number) => void;
 // Wrong answers are always Again. A correct answer is graded by the button the user taps.
 export function useCardAnswer(onGrade: OnGrade) {
   const shownAt = useRef(0);
+  const hasAnswered = useRef(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [durationMs, setDurationMs] = useState(0);
 
@@ -18,8 +19,11 @@ export function useCardAnswer(onGrade: OnGrade) {
     shownAt.current = Date.now();
   }, []);
 
-  // Called once, when the user submits or taps an answer.
+  // Called once, when the user submits or taps an answer. A second submit (double tap,
+  // Enter pressed twice) is ignored, so it cannot overwrite the time or the result.
   const recordAnswer = useCallback((correct: boolean) => {
+    if (hasAnswered.current) return;
+    hasAnswered.current = true;
     setDurationMs(Date.now() - shownAt.current);
     setIsCorrect(correct);
   }, []);

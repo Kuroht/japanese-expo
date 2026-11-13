@@ -1,11 +1,11 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-import { DEFAULT_STUDY_SETTINGS } from "../lib/studySettings";
+import { cleanStudySettings, DEFAULT_STUDY_SETTINGS } from "../lib/studySettings";
 import type { StudySettings } from "../types";
 
 const SETTINGS_KEY = "study";
 
-// Reads the saved settings (JSON) merged over the defaults.
+// Reads the saved settings (JSON), cleaned so every value is valid (bad ones become defaults).
 // Broken or missing JSON just gives the defaults, so a bad value can never block studying.
 export async function loadSettings(db: SQLiteDatabase): Promise<StudySettings> {
   const row = await db.getFirstAsync<{ value: string }>(
@@ -14,8 +14,7 @@ export async function loadSettings(db: SQLiteDatabase): Promise<StudySettings> {
   );
   if (!row) return DEFAULT_STUDY_SETTINGS;
   try {
-    const saved = JSON.parse(row.value) as Partial<StudySettings>;
-    return { ...DEFAULT_STUDY_SETTINGS, ...saved };
+    return cleanStudySettings(JSON.parse(row.value));
   } catch {
     return DEFAULT_STUDY_SETTINGS;
   }
@@ -26,7 +25,7 @@ export async function saveSettings(
   db: SQLiteDatabase,
   changes: Partial<StudySettings>,
 ): Promise<StudySettings> {
-  const merged = { ...(await loadSettings(db)), ...changes };
+  const merged = cleanStudySettings({ ...(await loadSettings(db)), ...changes });
   await db.runAsync(
     "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
     [SETTINGS_KEY, JSON.stringify(merged)],

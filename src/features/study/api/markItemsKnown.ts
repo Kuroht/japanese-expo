@@ -10,7 +10,7 @@ export async function markItemsKnown(db: SQLiteDatabase, items: ItemRef[]): Prom
     for (const { itemType, itemKey } of items) {
       await db.runAsync(
         `INSERT INTO items (item_type, item_key, status, introduced_at) VALUES (?, ?, 'known', NULL)
-         ON CONFLICT(item_type, item_key) DO UPDATE SET status = 'known'`,
+         ON CONFLICT(item_type, item_key) DO UPDATE SET status = 'known', introduced_at = NULL`,
         [itemType, itemKey],
       );
       await db.runAsync("DELETE FROM cards WHERE item_type = ? AND item_key = ?", [

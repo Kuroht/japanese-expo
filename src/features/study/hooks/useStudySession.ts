@@ -35,6 +35,10 @@ export function useStudySession() {
   const db = useSQLiteContext();
   const [state, setState] = useState<SessionState>(startState);
   const hasStarted = useRef(false);
+  // Blocks a second tap while an answer is being handled (a fast double tap would otherwise
+  // save the same card twice and skip the next step). isSaving tells the screen to ignore taps.
+  const isBusy = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Prepare once. prepareSession saves the new items, so running it twice (React dev
   // double-effects) would introduce extra items; the ref prevents that.
@@ -56,8 +60,15 @@ export function useStudySession() {
       );
   }, [db]);
 
-  // "Got it" on an intro.
+  // The queue changed (the step was handled and a new one is showing): accept taps again.
+  useEffect(() => {
+    isBusy.current = false;
+  }, [state.queue]);
+
+  // "Got it" on an intro. The busy flag is cleared by the effect above once the next step shows.
   const completeIntro = useCallback(() => {
+    if (isBusy.current) return;
+    isBusy.current = true;
     setState((current) => ({
       ...current,
       queue: finishIntro(current.queue),
@@ -70,7 +81,9 @@ export function useStudySession() {
   const gradeCard = useCallback(
     async (rating: StudyRating, durationMs: number) => {
       const step = state.queue[0];
-      if (!step || step.kind !== "card") return;
+      if (!step || step.kind !== "card" || isBusy.current) return;
+      isBusy.current = true;
+      setIsSaving(true);
       try {
         const updatedCard = await saveReview(db, step.card, rating, Date.now(), durationMs);
         setState((current) => ({
@@ -82,10 +95,13 @@ export function useStudySession() {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         setState((current) => ({ ...current, status: "error", errorMessage: message }));
+      } finally {
+        isBusy.current = false;
+        setIsSaving(false);
       }
     },
     [db, state.queue],
   );
 
-  return { ...state, completeIntro, gradeCard };
+  return { ...state, isSaving, completeIntro, gradeCard };
 }

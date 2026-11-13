@@ -36,6 +36,8 @@ describe("checkRomaji", () => {
     ["カー", "kaa"],
     ["カー", "ka-"],
     ["キャ", "kya"],
+    ["キャー", "kyaa"],
+    ["キャー", "kya-"],
     ["ティ", "ti"],
     ["ティ", "thi"],
     ["ファ", "fa"],
@@ -50,6 +52,9 @@ describe("checkRomaji", () => {
     ["ン", "so"],
     ["シ", ""],
     ["カー", "ka"],
+    ["シ", "し"],
+    ["シ", "シ"],
+    ["カ", "か"],
   ])("rejects %s typed as '%s'", (kana, typed) => {
     expect(checkRomaji(kana, typed)).toBe(false);
   });

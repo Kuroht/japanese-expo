@@ -6,7 +6,7 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Records the user repeating a sentence and plays the recording back.
 // The latest recording is kept in memory only (one per hook instance), not saved anywhere.
@@ -17,8 +17,26 @@ export function useShadowRecorder() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   // The player loads the recording as soon as there is a uri (null = nothing loaded).
   const player = useAudioPlayer(recordingUri);
+  // True while the permission prompt or recorder set-up is pending, so a second tap is ignored.
+  const isStarting = useRef(false);
+  // If the screen closes mid-recording, stop it so the microphone is released.
+  useEffect(() => {
+    return () => {
+      if (!recorder.isRecording) return;
+      void recorder.stop().catch(() => {});
+      void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
+    };
+  }, [recorder]);
+
+  // Puts the audio mode back to playback (on iOS, recording mode makes playback very quiet).
+  const resetAudioMode = useCallback(
+    () => setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {}),
+    [],
+  );
 
   const startRecording = useCallback(async () => {
+    if (isStarting.current) return;
+    isStarting.current = true;
     setErrorMessage(null);
     try {
       const permission = await requestRecordingPermissionsAsync();
@@ -35,19 +53,23 @@ export function useShadowRecorder() {
       recorder.record();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not start recording.");
+      await resetAudioMode();
+    } finally {
+      isStarting.current = false;
     }
-  }, [recorder]);
+  }, [recorder, resetAudioMode]);
 
   const stopRecording = useCallback(async () => {
     try {
       await recorder.stop();
       setRecordingUri(recorder.uri);
-      // On iOS, leaving recording mode on sends playback to the quiet earpiece speaker.
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not stop recording.");
+    } finally {
+      // On iOS, leaving recording mode on sends playback to the quiet earpiece speaker.
+      await resetAudioMode();
     }
-  }, [recorder]);
+  }, [recorder, resetAudioMode]);
 
   // Starts the recording from the beginning.
   const playRecording = useCallback(() => {

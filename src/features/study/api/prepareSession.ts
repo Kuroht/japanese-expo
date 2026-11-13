@@ -1,31 +1,29 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-import { buildSession, newItemLimit } from "../lib/buildSession";
 import { buildQueue, type NewItemWithCards } from "../lib/sessionQueue";
 import type { SessionPlan, SessionStep } from "../types";
-import { countIntroducedToday, loadDueCards } from "./cardQueries";
-import { introduceItem } from "./introduceItem";
-import { getNewItemCandidates } from "./newItemCandidates";
-import { loadSettings } from "./studySettingsStore";
+import { insertItemRows, loadItemCards } from "./introduceItem";
+import { planSession } from "./planSession";
 
 export type PreparedSession = { plan: SessionPlan; queue: SessionStep[] };
 
-// The "Start session" button: loads everything, picks reviews and new items, saves the new
-// items (so their cards have ids) and returns the ordered queue of steps to show.
-// Due cards are read BEFORE introducing, so new cards are never counted as reviews.
+// The "Start session" button: plans the session, saves the fresh new items (so their cards
+// have ids) and returns the ordered queue of steps to show.
+// Planning reads the due cards BEFORE introducing, so new cards are never counted as reviews.
+// All fresh items are introduced in ONE transaction: a crash never leaves half a session.
 export async function prepareSession(db: SQLiteDatabase, now: number): Promise<PreparedSession> {
-  const settings = await loadSettings(db);
-  const dueCards = await loadDueCards(db, now);
-  const introducedToday = await countIntroducedToday(db, now);
-  const dueNowCount = dueCards.filter((card) => card.due <= now).length;
-  const limit = newItemLimit(dueNowCount, introducedToday, settings);
-  const newItemCandidates = limit > 0 ? await getNewItemCandidates(db, limit) : [];
+  const { plan, unseen, freshItems } = await planSession(db, now);
 
-  const plan = buildSession({ dueCards, newItemCandidates, introducedToday, settings, now });
+  await db.withTransactionAsync(async () => {
+    for (const item of freshItems) {
+      await insertItemRows(db, item, now);
+    }
+  });
 
-  const newItems: NewItemWithCards[] = [];
-  for (const item of plan.newItems) {
-    newItems.push({ item, cards: await introduceItem(db, item, now) });
+  const fresh: NewItemWithCards[] = [];
+  for (const item of freshItems) {
+    fresh.push({ item, cards: await loadItemCards(db, item) });
   }
-  return { plan, queue: buildQueue(plan.reviews, newItems) };
+  // Unseen items go first, so they get the first intro spots.
+  return { plan, queue: buildQueue(plan.reviews, [...unseen, ...fresh]) };
 }
